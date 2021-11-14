@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <title>Todo List</title>
+</head>
+
+<body>
+    <div class="container mx-auto mt-5">
+        <div class="row">
+            <div class="col-12">
+                <div id="app">
+                    <ul v-if="todos.length > 0" class="list-group">
+
+                        <li :style="lineType(todo.is_done)" v-for="todo in todos" :key="todo.id"
+                            class="list-group-item"> <span>[[todo.title]]</span>
+
+                            <button @click="completeTodo(todo.id)" class="btn btn-info float-right">[[todo.is_done ?
+                                "Uncomplete" : "Complete"]].</button>
+
+                        </li>
+                    </ul>
+                    <ul v-else class="list-group">
+                        <li class="list-group-item">
+                            No todo good to go!
+                        </li>
+                    </ul>
+
+                    <div class="input-group mb-3 mt-5">
+                        <input v-model="newTodo" type="text" class="form-control" placeholder="Any todo?"
+                            aria-describedby="button-addon2">
+                        <div class="input-group-append">
+                            <button :disabled="!newTodo.length > 0" @click="createNewTodo()" class="btn btn-primary"
+                                type="button">Add.</button>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+<script>
+    const url = window.location.hostname
+
+    let app = new Vue({
+        el: "#app",
+        data() {
+            return {
+                todos: [],
+                newTodo: ""
+            }
+        },
+        delimiters: ['[[', ']]'],
+
+        mounted() {
+            axios.get("/api/todos/", {
+                headers: {
+                    "Accept": "application/json"
+                }
+            })
+                .then((res) => {
+                    this.todos = res.data
+                })
+                .catch((err) => {
+                    console.log(err);
+                })
+        },
+        methods: {
+            createNewTodo() {
+
+                let payload = {
+                    "title": this.newTodo
+                }
+                axios.post(
+                    "/api/todos/",
+                    payload
+                )
+                    .then((res) => {
+                        this.todos.push(res.data)
+                        this.newTodo = ""
+                    })
+                    .catch((err) => {
+                        console.log(err);
+                    })
+            },
+            completeTodo(todoPk) {
+                let objIndex = this.todos.findIndex((obj => obj.id == parseInt(todoPk, 10)));
+                let obj = this.todos[objIndex]
+                let payload = { is_done: !obj.is_done }
+                let updateUrl = `/api/todos/${todoPk}/`
+                axios.patch(updateUrl, payload)
+                    .then((res) => {
+                        this.todos[objIndex].is_done = res.data.is_done
+                    })
+                    .catch((err) => {
+                        console.log(err);
+                    })
+            },
+            lineType(isDone) {
+                if (isDone) {
+                    return {
+                        textDecoration: "line-through"
+                    }
+                }
+            }
+        },
+
+
+    })
+</script>
+
+</html>
