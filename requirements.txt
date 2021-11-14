@@ -1,0 +1,4 @@
+black==21.10b0
+Django==3.2.8
+django-extensions==3.1.5
+djangorestframework==3.12.4
